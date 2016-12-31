@@ -1,0 +1,81 @@
+#!/bin/sh
+### BEGIN INIT INFO
+# Provides:             Airsonos
+# Required-Start:       $all
+# Required-Stop:        $local_fs $network
+# Default-Start:        3 4 5
+# Default-Stop:         0 1 2 6
+# Description:          Airsonos
+### END INIT INFO
+
+
+# INIT Script by www.andreas-fritz.net
+######################################
+# Customize values for your needs: "User"; "DIR"
+
+USER="airsonos"
+DIR="/usr/bin"
+PIDFILE="/home/airsonos/airsonos.pid"
+LOGFILE="/home/airsonos/airsonos.log"
+
+###### Airsonos start/stop script ######
+
+do_start() 
+{
+	su $USER -c "nohup ${DIR}/airsonos >${LOGFILE} &
+        echo \$! > ${PIDFILE}"
+}
+
+do_stop() 
+{
+        su $USER -c "kill -TERM $(cat ${PIDFILE})"
+        su $USER -c "rm ${PIDFILE}"
+}
+
+do_status()
+{
+	if [ -f "$PIDFILE" ]
+	then
+		echo "Airsonos is running. PID: $(cat ${PIDFILE})"
+	else
+		echo "Airsonos is not running"
+	fi
+}
+
+do_restart()
+{
+	do_stop
+	sleep 5
+	do_start
+}
+
+do_check()
+{
+	if grep -q "Search complete" $LOGFILE
+	then
+		echo "Device Found"
+	else
+		do_restart
+	fi
+}
+
+case "$1" in
+start)
+	do_start
+	do_check
+;;
+stop)
+	do_stop
+;;
+restart)
+	do_restart
+;;
+status)
+	do_status
+;;
+*)
+	echo "Usage {start|stop|restart|status}" >&2
+exit 1
+;;
+esac
+exit 0
